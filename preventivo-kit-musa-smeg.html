@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Prova preventivo - Kit Musa Smeg</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f3ef; margin: 0; padding: 24px; color: #2c2c2a; }
+  h2 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #6b6a66; margin: 0 0 16px; }
+  .promo-banner { display: none; max-width: 900px; background: #edf3e6; border: 1px solid #a8c98a; color: #3b6d11; font-size: 13px; font-weight: 500; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+  .promo-banner.active { display: block; }
+  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #888780; margin: 24px 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; max-width: 900px; }
+  .card { background: #fff; border: 2px solid #e3e1d8; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+  .card:hover { border-color: #c9c7ba; }
+  .card.selected { border-color: #3b6d11; box-shadow: 0 0 0 1px #3b6d11; }
+  .card-photo { width: 100%; height: 120px; background: #f8f7f3; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px; }
+  .card-photo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .card-body { padding: 9px 11px 11px; }
+  .card-code { font-size: 10px; color: #888780; font-weight: 500; }
+  .card-name { font-size: 12px; font-weight: 500; margin: 2px 0 6px; line-height: 1.25; min-height: 30px; }
+  .price-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .price-old { font-size: 11px; color: #a3a19a; text-decoration: line-through; }
+  .price-new { font-size: 15px; font-weight: 600; color: #712b13; }
+  .badge-selected { display: none; font-size: 10px; font-weight: 500; color: #3b6d11; margin-top: 6px; }
+  .card.selected .badge-selected { display: block; }
+  .summary { max-width: 900px; margin-top: 24px; padding: 16px 18px; background: #fff; border-radius: 12px; }
+  .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .summary-row.total { font-size: 16px; font-weight: 600; color: #712b13; border-top: 1px solid #eee; margin-top: 8px; padding-top: 10px; }
+  .summary-row.savings { color: #3b6d11; font-size: 12px; }
+  .empty-hint { font-size: 13px; color: #999; }
+</style>
+</head>
+<body>
+<h2>Kit Musa Smeg — prova preventivo</h2>
+<p class="sub">Clicca sui prodotti come faresti per un cliente vero. Il prezzo promo (min. 3 pezzi stesso brand) si applica automaticamente.</p>
+
+<div class="promo-banner" id="promoBanner">✓ Promo Kit Musa attiva — hai selezionato 3+ elettrodomestici, prezzi promo applicati</div>
+
+<div class="section-label">Forni</div>
+<div class="grid" id="cat-Forno"></div>
+<div class="section-label">Forni microonde</div>
+<div class="grid" id="cat-Forno_microonde"></div>
+<div class="section-label">Piani cottura</div>
+<div class="grid" id="cat-Piano_cottura"></div>
+<div class="section-label">Piani con aspirazione integrata</div>
+<div class="grid" id="cat-Piano_aspirazione"></div>
+<div class="section-label">Lavastoviglie</div>
+<div class="grid" id="cat-Lavastoviglie"></div>
+<div class="section-label">Frigoriferi e congelatori</div>
+<div class="grid" id="cat-Frigorifero"></div>
+
+<div class="summary">
+  <div id="lines"><p class="empty-hint">Nessun prodotto selezionato.</p></div>
+  <div class="summary-row"><span>Prezzo listino totale</span><span id="totalListino">€ 0,00</span></div>
+  <div class="summary-row savings" id="savingsRow" style="display:none"><span>Risparmio promo</span><span id="savingsAmount">€ 0,00</span></div>
+  <div class="summary-row total"><span>Totale preventivo</span><span id="totalFinal">€ 0,00</span></div>
+</div>
+
+<script>
+const BASE = "https://raw.githubusercontent.com/amministrazione-tech/rp-ambienti-foto-prodotti/main/";
+
+const products = [
+  { code:"SF6200TB", cat:"Forno", name:"Forno termoventilato vetro nero 8 funzioni Vapor Clean", pn:799, pp:529, photo:"SF6200TB.jpg" },
+  { code:"SF6201TB", cat:"Forno", name:"Forno termoventilato vetro nero 10 funzioni Vapor Clean", pn:899, pp:639, photo:"SF6201TB.jpg" },
+  { code:"SFP6201TB", cat:"Forno", name:"Forno pirolitico vetro nero 10 funzioni", pn:1049, pp:749, photo:"SFP6201TB.jpg" },
+  { code:"SOP6201S2B", cat:"Forno", name:"Forno combi vapore-pirolisi 11 funzioni", pn:1399, pp:1219, photo:"SOP6201S2B.jpg" },
+  { code:"SO6202S3PB", cat:"Forno", name:"Forno full touch 100% vapore 12 funzioni", pn:2099, pp:1699, photo:"SO6202S3PB.jpg" },
+  { code:"SO6202M2B", cat:"Forno", name:"Forno combinato microonde SpeedwaveXL 11 funzioni", pn:1999, pp:1579, photo:"SO6202M2B.jpg" },
+  { code:"FMI225BI", cat:"Forno_microonde", name:"Forno microonde con grill 25L full touch H39", pn:599, pp:519, photo:"FMI225BI.jpg" },
+  { code:"SO4201M1BI", cat:"Forno_microonde", name:"Forno microonde combinato con grill 40L 10 funzioni", pn:1599, pp:1319, photo:"SO4201M1BI.jpg" },
+  { code:"SO4202M1B", cat:"Forno_microonde", name:"Forno microonde combinato con grill 40L full touch 11 funzioni", pn:1749, pp:1659, photo:"SO4202M1B.jpg" },
+  { code:"SI1B22641D", cat:"Piano_cottura", name:"Piano induzione 60cm 4 zone 1 zona Bridge", pn:749, pp:519, photo:"SI1B22641D.jpg" },
+  { code:"SI2B22641D", cat:"Piano_cottura", name:"Piano induzione 60cm 4 zone 2 zone Bridge", pn:799, pp:579, photo:"SI2B22641D.jpg" },
+  { code:"SI1B22741D", cat:"Piano_cottura", name:"Piano induzione 75cm 4 zone 1 zona Bridge", pn:899, pp:719, photo:"SI1B22741D.jpg" },
+  { code:"SI2B22741D", cat:"Piano_cottura", name:"Piano induzione 75cm 4 zone 2 zone Bridge", pn:949, pp:779, photo:"SI2B22741D.jpg" },
+  { code:"HOBD472D2", cat:"Piano_aspirazione", name:"Piano induzione con cappa integrata 70cm", pn:2299, pp:1659, photo:"HOBD472D2.jpg" },
+  { code:"HOBD482D2", cat:"Piano_aspirazione", name:"Piano induzione con cappa integrata 83cm", pn:2699, pp:2019, photo:"HOBD482D2.jpg" },
+  { code:"HOBD382N2", cat:"Piano_aspirazione", name:"Piano induzione con cappa integrata 83cm Matt Black", pn:3299, pp:2319, photo:"HOBD382N2.jpg" },
+  { code:"STL262D", cat:"Lavastoviglie", name:"Lavastoviglie 60cm 13 coperti Sliding", pn:799, pp:529, photo:"STL262D.jpg" },
+  { code:"STL361DQ", cat:"Lavastoviglie", name:"Lavastoviglie 60cm 14 coperti Tradizionale", pn:1049, pp:689, photo:"STL361DQ.jpg" },
+  { code:"STL7322BL", cat:"Lavastoviglie", name:"Lavastoviglie 60cm 13 coperti Orbitale verde salvia", pn:1199, pp:869, photo:"STL7322BL.jpg" },
+  { code:"STL7322AL", cat:"Lavastoviglie", name:"Lavastoviglie 60cm 13 coperti Planetarium classe A", pn:1349, pp:969, photo:"STL7322AL.jpg" },
+  { code:"ST4512IN", cat:"Lavastoviglie", name:"Lavastoviglie 45cm 9 coperti", pn:749, pp:629, photo:"ST4512IN.jpg" },
+  { code:"STL7324AQL", cat:"Lavastoviglie", name:"Lavastoviglie 60cm 14 coperti Planetarium classe A top", pn:1549, pp:1229, photo:"STL7324AQL.jpg" },
+  { code:"C3170NE", cat:"Frigorifero", name:"Frigorifero combinato NO-FROST 262L", pn:999, pp:729, photo:"C3170NE.jpg" },
+  { code:"C8175TNE", cat:"Frigorifero", name:"Frigorifero combinato Total No Frost 254L", pn:1299, pp:839, photo:"C8175TNE.jpg" },
+  { code:"C9174TN1D", cat:"Frigorifero", name:"Frigorifero combinato Total No Frost 248L", pn:1399, pp:1039, photo:"C9174TN1D.jpg" },
+  { code:"C8194TNE", cat:"Frigorifero", name:"Frigorifero combinato Total No Frost 306L H194", pn:1399, pp:1119, photo:"C8194TNE.jpg" },
+  { code:"C875TNE", cat:"Frigorifero", name:"Frigorifero combinato 370L 75cm", pn:1799, pp:1319, photo:"C875TNE.jpg" },
+  { code:"S9C1741E", cat:"Frigorifero", name:"Frigorifero monoporta ventilato con celletta 286L", pn:1699, pp:1229, photo:"S9C1741E.jpg" },
+  { code:"S9L1721E", cat:"Frigorifero", name:"Frigorifero monoporta ventilato tuttofrigo 314L", pn:1469, pp:1119, photo:"S9L1721E.jpg" },
+  { code:"S9F174NE", cat:"Frigorifero", name:"Congelatore monoporta NO FROST 216L", pn:1949, pp:1709, photo:"S9F174NE.jpg" },
+];
+
+const fmt = n => n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
+const selected = new Set();
+
+products.forEach(p => {
+  const container = document.getElementById('cat-' + p.cat);
+  if (!container) return;
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="card-photo"><img src="${BASE}kit-musa-smeg/${p.photo}" alt="${p.name}"></div>
+    <div class="card-body">
+      <div class="card-code">${p.code}</div>
+      <div class="card-name">${p.name}</div>
+      <div class="price-row"><span class="price-old">${fmt(p.pn)}</span><span class="price-new">${fmt(p.pp)}</span></div>
+      <div class="badge-selected">✓ selezionato</div>
+    </div>`;
+  card.onclick = () => {
+    if (selected.has(p.code)) selected.delete(p.code); else selected.add(p.code);
+    card.classList.toggle('selected');
+    update();
+  };
+  container.appendChild(card);
+});
+
+function update() {
+  const chosen = products.filter(p => selected.has(p.code));
+  const count = chosen.length;
+  const promoActive = count >= 3;
+  document.getElementById('promoBanner').classList.toggle('active', promoActive);
+
+  const linesEl = document.getElementById('lines');
+  if (count === 0) {
+    linesEl.innerHTML = '<p class="empty-hint">Nessun prodotto selezionato.</p>';
+  } else {
+    linesEl.innerHTML = chosen.map(p => `
+      <div class="summary-row"><span>${p.code} — ${p.name}</span><span>${fmt(promoActive ? p.pp : p.pn)}</span></div>
+    `).join('');
+  }
+
+  const totalListino = chosen.reduce((s,p) => s + p.pn, 0);
+  const totalFinal = chosen.reduce((s,p) => s + (promoActive ? p.pp : p.pn), 0);
+  const savings = totalListino - totalFinal;
+
+  document.getElementById('totalListino').textContent = fmt(totalListino);
+  document.getElementById('totalFinal').textContent = fmt(totalFinal);
+  document.getElementById('savingsRow').style.display = savings > 0 ? 'flex' : 'none';
+  document.getElementById('savingsAmount').textContent = fmt(savings);
+}
+update();
+</script>
+</body>
+</html>
