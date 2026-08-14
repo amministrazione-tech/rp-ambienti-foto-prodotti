@@ -203,12 +203,34 @@ function computeItemGroups(items) {
   return groups;
 }
 
+function computeGlobalOrdinatoGroups() {
+  // Raggruppa gli articoli di TUTTI i preventivi "ordinato" insieme, per kit+brand.
+  // Cosi' se due clienti diversi ordinano pezzi dello stesso brand e insieme
+  // raggiungono la soglia promo (min 3), entrambi ottengono il prezzo promo.
+  const groups = {};
+  quotes.filter(qq => qq.status === 'ordinato').forEach(qq => {
+    qq.items.forEach(it => {
+      const key = it.kit + '|' + it.brand;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(it);
+    });
+  });
+  return groups;
+}
+
+function getGroupsForQuote(q) {
+  // Un preventivo "ordinato" viene valutato insieme a TUTTI gli altri preventivi
+  // ordinati (per cogliere gli accoppiamenti tra clienti). Un preventivo ancora
+  // "preventivo" o "da ordinare" viene valutato da solo.
+  return q.status === 'ordinato' ? computeGlobalOrdinatoGroups() : computeItemGroups(q.items);
+}
+
 function quoteTotals(q) {
-  const groups = computeItemGroups(q.items);
+  const groups = getGroupsForQuote(q);
   let listino = 0, finale = 0;
   q.items.forEach(it => {
     const key = it.kit + '|' + it.brand;
-    const promoActive = groups[key].length >= 3;
+    const promoActive = groups[key] && groups[key].length >= 3;
     listino += it.pn;
     finale += promoActive ? it.pp : it.pn;
   });
@@ -333,13 +355,18 @@ function renderDetail() {
   document.getElementById('deliveryInput').value = q.deliveryDate || '';
 
   // gap banners
-  const groups = computeItemGroups(q.items);
+  const localGroups = computeItemGroups(q.items);
+  const effectiveGroups = getGroupsForQuote(q);
   const gapEl = document.getElementById('gapBanners');
   let gapHtml = '';
-  Object.keys(groups).forEach(key => {
+  Object.keys(localGroups).forEach(key => {
     const [kit, brand] = key.split('|');
-    const count = groups[key].length;
-    if (count > 0 && count < 3) {
+    const count = localGroups[key].length;
+    const effectiveCount = effectiveGroups[key] ? effectiveGroups[key].length : count;
+    if (q.status === 'ordinato' && effectiveCount >= 3) {
+      const otherClients = [...new Set(effectiveGroups[key].map(it => it.__client).filter(c => c && c !== q.client))];
+      gapHtml += `<div class="promo-active-banner">✓ ${brand} (${kit}): promo attiva — ${effectiveCount} pezzi ordinati in totale${otherClients.length ? ' (insieme a ' + otherClients.join(', ') + ')' : ''}.</div>`;
+    } else if (count > 0 && count < 3) {
       gapHtml += `<div class="gap-banner">⚠ ${brand} (${kit}): hai ${count} pezzo${count>1?'i':''} selezionat${count>1?'i':'o'} — te ne manca${3-count>1?'no':''} ${3-count} per attivare la promo kit (min. 3).</div>`;
     } else if (count >= 3) {
       gapHtml += `<div class="promo-active-banner">✓ ${brand} (${kit}): promo attiva con ${count} pezzi.</div>`;
@@ -373,7 +400,7 @@ function toggleProduct(p) {
   const q = getCurrentQuote();
   const idx = q.items.findIndex(it => it.kit === p.kit && it.code === p.code);
   if (idx >= 0) q.items.splice(idx, 1);
-  else q.items.push(p);
+  else q.items.push({ ...p, __client: q.client }); // copia + tag cliente, mai riferimento diretto a PRODUCTS
   saveQuotes();
   renderDetail();
 }
@@ -412,14 +439,14 @@ function renderCatalog() {
 
 function renderSummary() {
   const q = getCurrentQuote();
-  const groups = computeItemGroups(q.items);
+  const groups = getGroupsForQuote(q);
   const linesEl = document.getElementById('lines');
   if (q.items.length === 0) {
     linesEl.innerHTML = '<p class="empty-hint">Nessun prodotto selezionato.</p>';
   } else {
     linesEl.innerHTML = q.items.map(p => {
       const key = p.kit + '|' + p.brand;
-      const promoActive = groups[key].length >= 3;
+      const promoActive = groups[key] && groups[key].length >= 3;
       return `<div class="summary-row"><span>${p.code} — ${p.name} <em style="color:#aaa">(${p.kit})</em></span><span>${fmt(promoActive ? p.pp : p.pn)}</span></div>`;
     }).join('');
   }
