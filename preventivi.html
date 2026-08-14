@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Preventivi - RP Ambienti</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f3ef; margin: 0; padding: 20px; color: #2c2c2a; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+  .sub { font-size: 13px; color: #6b6a66; margin: 0 0 16px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; max-width: 1100px; }
+  .btn { padding: 9px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: #2c2c2a; color: #fff; }
+  .btn-secondary { background: #fff; color: #2c2c2a; border: 1px solid #ddd; }
+  .btn-small { padding: 5px 10px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .dashboard { max-width: 1100px; background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+  .dash-total { font-size: 26px; font-weight: 700; color: #3b6d11; }
+  .dash-label { font-size: 12px; color: #888780; text-transform: uppercase; letter-spacing: 0.03em; }
+  .chart-wrap { margin-top: 14px; overflow-x: auto; }
+  .chart-bar-label { font-size: 10px; fill: #888; }
+  .chart-value-label { font-size: 10px; fill: #3b6d11; font-weight: 600; }
+
+  .match-banner { max-width: 1100px; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+  .match-banner strong { color: #c05e00; }
+  .match-item { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #ffcc80; }
+
+  .quote-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-width: 1100px; }
+  .quote-card { background: #fff; border-radius: 12px; padding: 14px 16px; cursor: pointer; border: 2px solid transparent; }
+  .quote-card:hover { border-color: #ddd; }
+  .quote-client { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .quote-meta { font-size: 12px; color: #888780; margin-bottom: 8px; }
+  .status-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; }
+  .status-preventivo { background: #e8e6de; color: #6b6a66; }
+  .status-da_ordinare { background: #fdecc8; color: #a06a00; }
+  .status-ordinato { background: #d9ecc7; color: #3b6d11; }
+  .quote-total { font-size: 14px; font-weight: 600; margin-top: 8px; }
+
+  .modal-overlay { display:none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 90%; max-width: 380px; }
+  .modal input, .modal select { width: 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; margin-bottom: 12px; }
+  .modal label { font-size: 12px; color: #888780; display: block; margin-bottom: 4px; }
+
+  .detail-header { max-width: 1100px; background: #fff; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .detail-header .client-name { font-size: 18px; font-weight: 700; }
+  .detail-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .detail-controls select, .detail-controls input { padding: 7px 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 12px; }
+
+  .gap-banner { max-width: 1100px; background: #fce8e8; border: 1px solid #eab0b0; color: #a02020; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; }
+  .promo-active-banner { max-width: 1100px; background: #edf3e6; border: 1px solid #a8c98a; color: #3b6d11; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; }
+
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; position: sticky; top: 0; background: #f4f3ef; padding: 8px 0; z-index: 10; }
+  .tab { padding: 8px 14px; border-radius: 20px; background: #fff; border: 1px solid #e3e1d8; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .tab.active { background: #2c2c2a; color: #fff; border-color: #2c2c2a; }
+  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #888780; margin: 22px 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; max-width: 1100px; }
+  .card { background: #fff; border: 2px solid #e3e1d8; border-radius: 12px; overflow: hidden; cursor: pointer; }
+  .card:hover { border-color: #c9c7ba; }
+  .card.selected { border-color: #3b6d11; box-shadow: 0 0 0 1px #3b6d11; }
+  .card-photo { width: 100%; height: 115px; background: #f8f7f3; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px; }
+  .card-photo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .card-body { padding: 9px 11px 11px; }
+  .card-code { font-size: 10px; color: #888780; font-weight: 500; }
+  .card-name { font-size: 12px; font-weight: 500; margin: 2px 0 6px; line-height: 1.25; min-height: 30px; }
+  .price-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .price-old { font-size: 11px; color: #a3a19a; text-decoration: line-through; }
+  .price-new { font-size: 15px; font-weight: 600; color: #712b13; }
+  .badge-selected { display: none; font-size: 10px; font-weight: 500; color: #3b6d11; margin-top: 6px; }
+  .card.selected .badge-selected { display: block; }
+
+  .summary { max-width: 1100px; margin-top: 24px; padding: 16px 18px; background: #fff; border-radius: 12px; }
+  .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .summary-row.total { font-size: 16px; font-weight: 600; color: #712b13; border-top: 1px solid #eee; margin-top: 8px; padding-top: 10px; }
+  .summary-row.savings { color: #3b6d11; font-size: 12px; }
+  .empty-hint { font-size: 13px; color: #999; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Preventivi — RP Ambienti</h1>
+    <p class="sub" style="margin:0">Catalogo Verinox 2026 — gestione multi-cliente</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-small" onclick="exportBackup()">Esporta backup</button>
+    <label class="btn btn-secondary btn-small" style="cursor:pointer">Importa backup<input type="file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+    <button class="btn btn-primary" onclick="openNewQuoteModal()">+ Nuovo preventivo</button>
+  </div>
+</div>
+
+<div id="listView">
+  <div class="dashboard">
+    <div class="dash-label">Totale risparmiato (preventivi ordinati)</div>
+    <div class="dash-total" id="dashTotal">€ 0,00</div>
+    <div class="chart-wrap"><svg id="chartSvg" width="100%" height="140"></svg></div>
+  </div>
+
+  <div id="matchBanner"></div>
+
+  <h2>I tuoi preventivi</h2>
+  <div class="quote-list" id="quoteList"></div>
+</div>
+
+<div id="detailView" class="hidden">
+  <div class="detail-header">
+    <div>
+      <div class="client-name" id="detailClientName"></div>
+      <div class="quote-meta" id="detailMeta"></div>
+    </div>
+    <div class="detail-controls">
+      <select id="statusSelect" onchange="updateStatus(this.value)">
+        <option value="preventivo">Preventivo</option>
+        <option value="da_ordinare">Da ordinare</option>
+        <option value="ordinato">Ordinato</option>
+      </select>
+      <input type="date" id="deliveryInput" onchange="updateDelivery(this.value)" title="Data consegna prevista">
+      <button class="btn btn-secondary btn-small" onclick="backToList()">← Torna alla lista</button>
+    </div>
+  </div>
+
+  <div id="gapBanners"></div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="catalog"></div>
+
+  <div class="summary">
+    <div id="lines"><p class="empty-hint">Nessun prodotto selezionato.</p></div>
+    <div class="summary-row"><span>Prezzo listino totale</span><span id="totalListino">€ 0,00</span></div>
+    <div class="summary-row savings" id="savingsRow" style="display:none"><span>Risparmio promo</span><span id="savingsAmount">€ 0,00</span></div>
+    <div class="summary-row total"><span>Totale preventivo</span><span id="totalFinal">€ 0,00</span></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newQuoteModal">
+  <div class="modal">
+    <h2>Nuovo preventivo</h2>
+    <label>Nome cliente</label>
+    <input type="text" id="newClientName" placeholder="Es. Mario Rossi">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="createQuote()">Crea</button>
+      <button class="btn btn-secondary" onclick="closeNewQuoteModal()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = "https://raw.githubusercontent.com/amministrazione-tech/rp-ambienti-foto-prodotti/main/";
+const PRODUCTS = [{"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SF6200TB", "name": "Forno termoventilato vetro nero 8 funzioni Vapor Clean", "pn": 799, "pp": 529, "photo": "kit-musa-smeg/SF6200TB.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SF6201TB", "name": "Forno termoventilato vetro nero 10 funzioni Vapor Clean", "pn": 899, "pp": 639, "photo": "kit-musa-smeg/SF6201TB.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SFP6201TB", "name": "Forno pirolitico vetro nero 10 funzioni", "pn": 1049, "pp": 749, "photo": "kit-musa-smeg/SFP6201TB.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SOP6201S2B", "name": "Forno combi vapore-pirolisi 11 funzioni", "pn": 1399, "pp": 1219, "photo": "kit-musa-smeg/SOP6201S2B.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SO6202S3PB", "name": "Forno full touch 100% vapore 12 funzioni", "pn": 2099, "pp": 1699, "photo": "kit-musa-smeg/SO6202S3PB.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno", "code": "SO6202M2B", "name": "Forno combinato microonde SpeedwaveXL 11 funzioni", "pn": 1999, "pp": 1579, "photo": "kit-musa-smeg/SO6202M2B.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno microonde", "code": "FMI225BI", "name": "Forno microonde con grill 25L full touch H39", "pn": 599, "pp": 519, "photo": "kit-musa-smeg/FMI225BI.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno microonde", "code": "SO4201M1BI", "name": "Forno microonde combinato con grill 40L 10 funzioni", "pn": 1599, "pp": 1319, "photo": "kit-musa-smeg/SO4201M1BI.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Forno microonde", "code": "SO4202M1B", "name": "Forno microonde combinato con grill 40L full touch 11 funzioni", "pn": 1749, "pp": 1659, "photo": "kit-musa-smeg/SO4202M1B.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano cottura", "code": "SI1B22641D", "name": "Piano induzione 60cm 4 zone 1 zona Bridge", "pn": 749, "pp": 519, "photo": "kit-musa-smeg/SI1B22641D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano cottura", "code": "SI2B22641D", "name": "Piano induzione 60cm 4 zone 2 zone Bridge", "pn": 799, "pp": 579, "photo": "kit-musa-smeg/SI2B22641D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano cottura", "code": "SI1B22741D", "name": "Piano induzione 75cm 4 zone 1 zona Bridge", "pn": 899, "pp": 719, "photo": "kit-musa-smeg/SI1B22741D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano cottura", "code": "SI2B22741D", "name": "Piano induzione 75cm 4 zone 2 zone Bridge", "pn": 949, "pp": 779, "photo": "kit-musa-smeg/SI2B22741D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano aspirazione", "code": "HOBD472D2", "name": "Piano induzione con cappa integrata 70cm", "pn": 2299, "pp": 1659, "photo": "kit-musa-smeg/HOBD472D2.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano aspirazione", "code": "HOBD482D2", "name": "Piano induzione con cappa integrata 83cm", "pn": 2699, "pp": 2019, "photo": "kit-musa-smeg/HOBD482D2.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Piano aspirazione", "code": "HOBD382N2", "name": "Piano induzione con cappa integrata 83cm Matt Black", "pn": 3299, "pp": 2319, "photo": "kit-musa-smeg/HOBD382N2.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "STL262D", "name": "Lavastoviglie 60cm 13 coperti Sliding", "pn": 799, "pp": 529, "photo": "kit-musa-smeg/STL262D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "STL361DQ", "name": "Lavastoviglie 60cm 14 coperti Tradizionale", "pn": 1049, "pp": 689, "photo": "kit-musa-smeg/STL361DQ.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "STL7322BL", "name": "Lavastoviglie 60cm 13 coperti Orbitale verde salvia", "pn": 1199, "pp": 869, "photo": "kit-musa-smeg/STL7322BL.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "STL7322AL", "name": "Lavastoviglie 60cm 13 coperti Planetarium classe A", "pn": 1349, "pp": 969, "photo": "kit-musa-smeg/STL7322AL.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "ST4512IN", "name": "Lavastoviglie 45cm 9 coperti", "pn": 749, "pp": 629, "photo": "kit-musa-smeg/ST4512IN.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Lavastoviglie", "code": "STL7324AQL", "name": "Lavastoviglie 60cm 14 coperti Planetarium classe A top", "pn": 1549, "pp": 1229, "photo": "kit-musa-smeg/STL7324AQL.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "C3170NE", "name": "Frigorifero combinato NO-FROST 262L", "pn": 999, "pp": 729, "photo": "kit-musa-smeg/C3170NE.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "C8175TNE", "name": "Frigorifero combinato Total No Frost 254L", "pn": 1299, "pp": 839, "photo": "kit-musa-smeg/C8175TNE.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "C9174TN1D", "name": "Frigorifero combinato Total No Frost 248L", "pn": 1399, "pp": 1039, "photo": "kit-musa-smeg/C9174TN1D.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "C8194TNE", "name": "Frigorifero combinato Total No Frost 306L H194", "pn": 1399, "pp": 1119, "photo": "kit-musa-smeg/C8194TNE.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "C875TNE", "name": "Frigorifero combinato 370L 75cm", "pn": 1799, "pp": 1319, "photo": "kit-musa-smeg/C875TNE.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "S9C1741E", "name": "Frigorifero monoporta ventilato con celletta 286L", "pn": 1699, "pp": 1229, "photo": "kit-musa-smeg/S9C1741E.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Frigorifero", "code": "S9L1721E", "name": "Frigorifero monoporta ventilato tuttofrigo 314L", "pn": 1469, "pp": 1119, "photo": "kit-musa-smeg/S9L1721E.jpg", "brand": "SMEG"}, {"kit": "Kit Musa Smeg", "cat": "Congelatore", "code": "S9F174NE", "name": "Congelatore monoporta NO FROST 216L", "pn": 1949, "pp": 1709, "photo": "kit-musa-smeg/S9F174NE.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SF6100VB3", "name": "Forno ventilato Estetica Linea vetro nero 6 funzioni", "pn": 799, "pp": 559, "photo": "kit-linea-smeg/SF6100VB3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SF6101TB3", "name": "Forno termoventilato vetro nero 10 funzioni Vapor Clean", "pn": 949, "pp": 689, "photo": "kit-linea-smeg/SF6101TB3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SFP6101TB3", "name": "Forno pirolitico vetro nero 10 funzioni", "pn": 1099, "pp": 849, "photo": "kit-linea-smeg/SFP6101TB3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SOP6102TB3", "name": "Forno pizza-pirolisi Air-Fry BBQ full touch", "pn": 1499, "pp": 1269, "photo": "kit-linea-smeg/SOP6102TB3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SO6102S3PB3", "name": "Forno full touch 100% vapore 12 funzioni", "pn": 2099, "pp": 1699, "photo": "kit-linea-smeg/SO6102S3PB3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno", "code": "SO6102M2B3", "name": "Forno combinato microonde SpeedwaveXL 11 funzioni", "pn": 1999, "pp": 1579, "photo": "kit-linea-smeg/SO6102M2B3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SI1M4644D", "name": "Piano induzione 60cm Multizone", "pn": 849, "pp": 759, "photo": "kit-linea-smeg/SI1M4644D.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SI1M4744D", "name": "Piano induzione 75cm Multizone", "pn": 979, "pp": 789, "photo": "kit-linea-smeg/SI1M4744D.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SI1M4854D", "name": "Piano induzione 80cm 5 zone Multizone", "pn": 1399, "pp": 939, "photo": "kit-linea-smeg/SI1M4854D.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SIM1864D", "name": "Piano induzione 80cm 6 zone Multizone glassy", "pn": 2049, "pp": 1219, "photo": "kit-linea-smeg/SIM1864D.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SIM3644N", "name": "Piano induzione 60cm Matt Black Multizone", "pn": 1299, "pp": 1129, "photo": "kit-linea-smeg/SIM3644N.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Piano cottura", "code": "SIM3844N", "name": "Piano induzione 80cm Matt Black Multizone", "pn": 1499, "pp": 1109, "photo": "kit-linea-smeg/SIM3844N.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno microonde", "code": "FMI120B3", "name": "Forno microonde con grill H39cm", "pn": 599, "pp": 519, "photo": "kit-linea-smeg/FMI120B3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno microonde", "code": "SO4101M0B3", "name": "Forno microonde con grill H45cm 40L", "pn": 1399, "pp": 1129, "photo": "kit-linea-smeg/SO4101M0B3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Forno microonde", "code": "SO4102M1B3", "name": "Forno microonde combinato full touch 40L", "pn": 1749, "pp": 1569, "photo": "kit-linea-smeg/SO4102M1B3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Cantina", "code": "CVI040BE", "name": "Cantina da incasso 40 bottiglie H88cm", "pn": 4299, "pp": 3859, "photo": "kit-linea-smeg/CVI040BE.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Cantina", "code": "CVI120B3E", "name": "Cantina da incasso 20 bottiglie H45cm", "pn": 2499, "pp": 2249, "photo": "kit-linea-smeg/CVI120B3E.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Cassetto sommelier", "code": "CPS115B3", "name": "Cassetto sommelier H15cm", "pn": 1299, "pp": 1169, "photo": "kit-linea-smeg/CPS115B3.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Frigorifero", "code": "C8175TNE", "name": "Frigorifero combinato Total No Frost 254L", "pn": 1299, "pp": 839, "photo": "kit-musa-smeg/C8175TNE.jpg", "brand": "SMEG"}, {"kit": "Kit Linea Smeg", "cat": "Lavastoviglie", "code": "STL361DQ", "name": "Lavastoviglie 60cm 14 coperti Tradizionale", "pn": 1049, "pp": 689, "photo": "kit-musa-smeg/STL361DQ.jpg", "brand": "SMEG"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OT 86331 BG", "name": "Forno multifunzione Glass Black", "pn": 799, "pp": 689, "photo": "kit-asko/OT86331BG.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavastoviglie", "code": "DFI 5431 A", "name": "Lavastoviglie Logic a scomparsa totale 82cm 14 coperti", "pn": 999, "pp": 719, "photo": "kit-asko/DFI5431A.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Frigorifero", "code": "RFN 31831 SEI", "name": "Combinato da incasso Dual No Frost H178cm", "pn": 1149, "pp": 1029, "photo": "kit-asko/RFN31831SEI.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Piano cottura", "code": "HI 2641 FBG1", "name": "Piano cottura induzione Classic 60cm", "pn": 699, "pp": 629, "photo": "kit-asko/HI2641FBG1.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OP 86331 BG", "name": "Forno pirolitico Glass Black", "pn": 999, "pp": 879, "photo": "kit-asko/OP86331BG.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OT 26 BGH", "name": "Forno multifunzione Classic Celsius Cooking", "pn": 899, "pp": 809, "photo": "kit-asko/OT26BGH.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OCS 8637 S", "name": "Forno combinato a vapore Craft Acciaio", "pn": 1199, "pp": 1049, "photo": "kit-asko/OCS8637S.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OCS 26 BGH", "name": "Forno combinato a vapore Classic Celsius", "pn": 1349, "pp": 1219, "photo": "kit-asko/OCS26BGH.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno", "code": "OCM 26 BGH", "name": "Forno combinato microonde Classic Celsius", "pn": 1499, "pp": 1349, "photo": "kit-asko/OCM26BGH.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Piano cottura", "code": "HI 2643 FBG1", "name": "Piano cottura induzione Classic 60cm", "pn": 799, "pp": 719, "photo": "kit-asko/HI2643FBG1.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Piano cottura", "code": "HI 2841 FBG1", "name": "Piano cottura induzione Classic 80cm", "pn": 899, "pp": 809, "photo": "kit-asko/HI2841FBG1.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Piano cottura", "code": "HI 2842 FBG1", "name": "Piano cottura induzione Classic 80cm Bridge", "pn": 999, "pp": 899, "photo": "kit-asko/HI2842FBG1.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Forno microonde", "code": "OM 23 BGC", "name": "Forno microonde H38cm Classic", "pn": 699, "pp": 629, "photo": "kit-asko/OM23BGC.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavastoviglie", "code": "DFI 8447 D", "name": "Lavastoviglie Classic a scomparsa totale 82cm", "pn": 999, "pp": 899, "photo": "kit-asko/DFI8447D.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavastoviglie", "code": "DSD 544 B", "name": "Lavastoviglie Logic con porta sliding 82cm", "pn": 1199, "pp": 1077, "photo": "kit-asko/DSD544B.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavastoviglie", "code": "DSD 746 U", "name": "Lavastoviglie Style con porta sliding 82cm", "pn": 1599, "pp": 1349, "photo": "kit-asko/DSD746U.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavastoviglie", "code": "DFI 747 U/1", "name": "Lavastoviglie Style a scomparsa totale 82cm", "pn": 1699, "pp": 1529, "photo": "kit-asko/DFI747U1.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavatrice", "code": "W 1084 BW", "name": "Lavatrice Classic 8kg 1400 giri bianco", "pn": 949, "pp": 855, "photo": "kit-asko/W1084BW.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Lavatrice", "code": "W 2086 C.W/3", "name": "Lavatrice Classic 8kg 1600 giri bianco", "pn": 1199, "pp": 1079, "photo": "kit-asko/W2086CW3.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Asciugatrice", "code": "T 208 H.W", "name": "Asciugatrice Classic 8kg bianco", "pn": 999, "pp": 899, "photo": "kit-asko/T208HW.jpg", "brand": "ASKO"}, {"kit": "Kit Asko", "cat": "Asciugatrice", "code": "T 409 HS.W", "name": "Asciugatrice Logic 9kg bianco", "pn": 1749, "pp": 1569, "photo": "kit-asko/T409HSW.jpg", "brand": "ASKO"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "FLM6LN", "name": "Forno multifunzione vetro nero 8 funzioni", "pn": 469, "pp": 310, "photo": "kit-delonghi/FLM6LN.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F6DP220EH", "name": "Frigorifero doppia porta 220L statico", "pn": 769, "pp": 435, "photo": "kit-delonghi/F6DP220EH.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "FFA46ASV", "name": "Piano cottura a gas 60cm 4 fuochi inox", "pn": 289, "pp": 200, "photo": "kit-delonghi/FFA46ASV.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavastoviglie", "code": "L6NP52E", "name": "Lavastoviglie 60cm 13 coperti", "pn": 969, "pp": 535, "photo": "kit-delonghi/L6NP52E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "FLM6LX", "name": "Forno multifunzione inox 8 funzioni", "pn": 419, "pp": 330, "photo": "kit-delonghi/FLM6LX.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "FLM6LNDG", "name": "Forno multifunzione nero digitale", "pn": 499, "pp": 435, "photo": "kit-delonghi/FLM6LNDG.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "DLP9LN", "name": "Forno pirolitico vetro nero 9 funzioni", "pn": 759, "pp": 555, "photo": "kit-delonghi/DLP9LN.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "NKE19PYN", "name": "Forno 19 funzioni Air Fry Pizza", "pn": 1039, "pp": 900, "photo": "kit-delonghi/NKE19PYN.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno", "code": "NKE21PSN", "name": "Forno Master Steam 21 funzioni", "pn": 1339, "pp": 1155, "photo": "kit-delonghi/NKE21PSN.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "BRI60", "name": "Piano induzione 60cm 4 zone", "pn": 499, "pp": 320, "photo": "kit-delonghi/BRI60.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "YLI61BG", "name": "Piano induzione 60cm Bridge", "pn": 599, "pp": 410, "photo": "kit-delonghi/YLI61BG.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "PIN72", "name": "Piano induzione 70cm", "pn": 659, "pp": 545, "photo": "kit-delonghi/PIN72.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "SLI754", "name": "Piano induzione 75cm Full Bridge", "pn": 1009, "pp": 835, "photo": "kit-delonghi/SLI754.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "SLI804", "name": "Piano induzione 78cm Full Bridge", "pn": 1129, "pp": 925, "photo": "kit-delonghi/SLI804.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "NSL460X", "name": "Piano a gas inox 60cm", "pn": 499, "pp": 400, "photo": "kit-delonghi/NSL460X.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "NSL575X", "name": "Piano a gas inox 75cm", "pn": 639, "pp": 480, "photo": "kit-delonghi/NSL575X.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "NSL460NCM", "name": "Piano a gas vetroceramica nero 60cm", "pn": 659, "pp": 525, "photo": "kit-delonghi/NSL460NCM.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Piano cottura", "code": "NSL575DNCM", "name": "Piano a gas vetroceramica nero 75cm", "pn": 829, "pp": 680, "photo": "kit-delonghi/NSL575DNCM.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavastoviglie", "code": "L6NP52E-SH", "name": "Lavastoviglie 60cm 14 coperti Sliding", "pn": 1089, "pp": 615, "photo": "kit-delonghi/L6NP52ESH.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavastoviglie", "code": "L6NP83D-SH", "name": "Lavastoviglie 60cm 15 coperti Sliding 3 cesti", "pn": 1229, "pp": 770, "photo": "kit-delonghi/L6NP83DSH.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavastoviglie", "code": "L6NP83C-SH", "name": "Lavastoviglie 60cm 16 coperti Ultra Wash", "pn": 1229, "pp": 945, "photo": "kit-delonghi/L6NP83CSH.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavastoviglie", "code": "L45P52EQD", "name": "Lavastoviglie 45cm 10 coperti", "pn": 699, "pp": 580, "photo": "kit-delonghi/L45P52EQD.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F7CTNF364E", "name": "Frigorifero combinato 364L H194 75cm", "pn": 2019, "pp": 1100, "photo": "kit-delonghi/F7CTNF364E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F6CTNF281E", "name": "Frigorifero combinato 281L H194 60cm", "pn": 1899, "pp": 1045, "photo": "kit-delonghi/F6CTNF281E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F6CLF264E", "name": "Frigorifero combinato Low Frost 264L", "pn": 1299, "pp": 625, "photo": "kit-delonghi/F6CLF264E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F6MP179E", "name": "Frigorifero monoporta H120 179L", "pn": 829, "pp": 580, "photo": "kit-delonghi/F6MP179E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Frigorifero", "code": "F6ST111E", "name": "Frigorifero sottotop 111L", "pn": 799, "pp": 545, "photo": "kit-delonghi/F6ST111E.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno microonde", "code": "DL38BGMW25L", "name": "Microonde con grill H38cm nero", "pn": 609, "pp": 455, "photo": "kit-delonghi/DL38BGMW25L.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Forno microonde", "code": "DL38XMW25L", "name": "Microonde con grill H38cm inox", "pn": 359, "pp": 345, "photo": "kit-delonghi/DL38XMW25L.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Cantina", "code": "CA6DZ6G", "name": "Cantina sottopiano 60cm 46 bottiglie", "pn": 1719, "pp": 945, "photo": "kit-delonghi/CA6DZ6G.jpg", "brand": "De Longhi"}, {"kit": "Kit De Longhi", "cat": "Lavatrice", "code": "LTQD6C9G1600A", "name": "Lavatrice da incasso 60cm 9kg", "pn": 989, "pp": 935, "photo": "kit-delonghi/LTQD6C9G1600A.jpg", "brand": "De Longhi"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Novy Easy 5101861", "name": "Piano induzione filtrante con aspirazione Novy", "pn": 2650, "pp": 1465, "photo": "aspirazione-integrata/NovyEasy5101861.jpg", "brand": "Novy"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Zero Easy 76", "name": "Piano induzione 76cm filtrante Matt Black", "pn": 2320, "pp": 2155, "photo": "aspirazione-integrata/FalmecZeroEasy76.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Zero Easy 84", "name": "Piano induzione 84cm filtrante Matt Black", "pn": 2360, "pp": 2190, "photo": "aspirazione-integrata/FalmecZeroEasy84.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Brera 75", "name": "Piano induzione 75cm aspirante motorizzato", "pn": 2540, "pp": 2355, "photo": "aspirazione-integrata/FalmecBrera75.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Brera 90", "name": "Piano induzione 89cm aspirante motorizzato", "pn": 2880, "pp": 2670, "photo": "aspirazione-integrata/FalmecBrera90.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Level One", "name": "Piano induzione 90cm aspirante nero lucido", "pn": 3265, "pp": 3100, "photo": "aspirazione-integrata/FalmecLevelOne.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Level", "name": "Piano induzione 89cm aspirante alluminio", "pn": 2240, "pp": 2130, "photo": "aspirazione-integrata/FalmecLevel.jpg", "brand": "Falmec"}, {"kit": "Aspirazione Integrata", "cat": "Piano aspirazione", "code": "Falmec Level Invisible", "name": "Piano induzione 89cm aspirante personalizzabile", "pn": 2110, "pp": 2000, "photo": "aspirazione-integrata/FalmecLevelInvisible.jpg", "brand": "Falmec"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ECBNe 8872", "name": "Combinato integrabile NoFrost BioFresh H203", "pn": 8459, "pp": 7599, "photo": "kit-liebherr/ECBNe8872.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ECBNe 8870", "name": "Combinato integrabile NoFrost BioFresh H203", "pn": 8259, "pp": 7399, "photo": "kit-liebherr/ECBNe8870.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICNSd 5603", "name": "Combinato integrabile EasyFresh NoFrost 194cm", "pn": 1889, "pp": 1269, "photo": "kit-liebherr/ICNSd5603.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICBNSd 5623", "name": "Combinato da incasso NoFrost BioFresh 194cm", "pn": 2609, "pp": 2369, "photo": "kit-liebherr/ICBNSd5623.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICBNci 5663", "name": "Combinato da incasso NoFrost BioFresh 194cm Prime", "pn": 3649, "pp": 3299, "photo": "kit-liebherr/ICBNci5663.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICNSd 5103", "name": "Combinato da incasso NoFrost 178cm", "pn": 1249, "pp": 1110, "photo": "kit-liebherr/ICNSd5103.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICNd 5103", "name": "Combinato da incasso NoFrost 178cm autoportante", "pn": 1349, "pp": 1259, "photo": "kit-liebherr/ICNd5103.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IKGN 51Vc03", "name": "Combinato da incasso NoFrost 178cm", "pn": 1499, "pp": 1359, "photo": "kit-liebherr/IKGN51Vc03.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IKGBN 51Vd23i", "name": "Combinato da incasso NoFrost BioFresh 178cm", "pn": 1899, "pp": 1720, "photo": "kit-liebherr/IKGBN51Vd23i.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICBNci 5153", "name": "Combinato da incasso NoFrost BioFresh 178cm Prime", "pn": 2779, "pp": 2499, "photo": "kit-liebherr/ICBNci5153.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "ICBNdi 5163", "name": "Combinato NoFrost BioFresh IceMaker 178cm", "pn": 2859, "pp": 2569, "photo": "kit-liebherr/ICBNdi5163.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IRd 5101", "name": "Monoporta da incasso 178cm", "pn": 1689, "pp": 1519, "photo": "kit-liebherr/IRd5101.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IRBSd 5120", "name": "Monoporta BioFresh 178cm", "pn": 1999, "pp": 1799, "photo": "kit-liebherr/IRBSd5120.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IRBSd 5121", "name": "Monoporta BioFresh 178cm porta a traino", "pn": 2069, "pp": 1859, "photo": "kit-liebherr/IRBSd5121.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "IRBbi 5150", "name": "Monoporta BioFresh 178cm Prime display TFT", "pn": 2900, "pp": 2619, "photo": "kit-liebherr/IRBbi5150.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNsdc 5203", "name": "Freestanding NoFrost 185,5cm inox", "pn": 999, "pp": 899, "photo": "kit-liebherr/CNsdc5203.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNsfd 5703", "name": "Freestanding NoFrost 201,5cm SteelFinish", "pn": 1279, "pp": 1149, "photo": "kit-liebherr/CNsfd5703.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNd 5203", "name": "Freestanding NoFrost 185,5cm bianco", "pn": 1199, "pp": 1079, "photo": "kit-liebherr/CNd5203.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNd 5704", "name": "Freestanding NoFrost 201,5cm bianco", "pn": 1199, "pp": 1079, "photo": "kit-liebherr/CNd5704.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNbdc 573i", "name": "Freestanding NoFrost 201,5cm nero", "pn": 1629, "pp": 1469, "photo": "kit-liebherr/CNbdc573i.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNsda 5723", "name": "Freestanding NoFrost 201,5cm inox classe A", "pn": 1999, "pp": 1749, "photo": "kit-liebherr/CNsda5723.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CNsfa 7723", "name": "Freestanding NoFrost 201,5x75cm acciaio", "pn": 2499, "pp": 2249, "photo": "kit-liebherr/CNsfa7723.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "CBNsdc 765i", "name": "Combinato BioFresh 185,5x75cm inox", "pn": 2599, "pp": 2339, "photo": "kit-liebherr/CBNsdc765i.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "Msdd 9012", "name": "French Door EasyFresh NoFrost 180,5x90,6cm", "pn": 2869, "pp": 2579, "photo": "kit-liebherr/Msdd9012.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "MBbsdi 9024", "name": "French Door BioFresh NoFrost IceMaker", "pn": 3929, "pp": 3539, "photo": "kit-liebherr/MBbsdi9024.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "SRd 5220", "name": "Monoporta freestanding 185,5cm bianco", "pn": 1199, "pp": 1079, "photo": "kit-liebherr/SRd5220.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Congelatore", "code": "SFNd 5227", "name": "Verticale NoFrost 185,5cm bianco", "pn": 1549, "pp": 1399, "photo": "kit-liebherr/SFNd5227.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Frigorifero", "code": "SRsfd 5220", "name": "Monoporta freestanding 185,5cm acciaio", "pn": 1299, "pp": 1169, "photo": "kit-liebherr/SRsfd5220.jpg", "brand": "Liebherr"}, {"kit": "Liebherr", "cat": "Congelatore", "code": "SFNsfd 5227", "name": "Verticale NoFrost 185,5cm acciaio", "pn": 1619, "pp": 1459, "photo": "kit-liebherr/SFNsfd5227.jpg", "brand": "Liebherr"}, {"kit": "Cappe", "cat": "Cappa", "code": "Falmec Virgola Touch Comfort", "name": "Cappa 60cm inox Super Silent", "pn": 540, "pp": 540, "photo": "cappe/FalmecVirgolaTouch.jpg", "brand": "Falmec"}, {"kit": "Cappe", "cat": "Cappa", "code": "Falmec Virgola No-Drop", "name": "Cappa anticondensa 60cm inox", "pn": 630, "pp": 630, "photo": "cappe/FalmecVirgolaNoDrop.jpg", "brand": "Falmec"}, {"kit": "Cappe", "cat": "Cappa", "code": "Smeg KSGT64BLV", "name": "Cappa gruppo incasso veletta 60cm nero", "pn": 760, "pp": 760, "photo": "cappe/SmegKSGTnero.jpg", "brand": "SMEG"}, {"kit": "Cappe", "cat": "Cappa", "code": "Smeg KSGT64XV", "name": "Cappa gruppo incasso veletta 60cm inox", "pn": 760, "pp": 760, "photo": "cappe/SmegKSGTinox.jpg", "brand": "SMEG"}];
+const STORAGE_KEY = 'rp_preventivi_v1';
+
+let quotes = [];
+let currentQuoteId = null;
+let currentKit = null;
+
+function loadQuotes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    quotes = raw ? JSON.parse(raw) : [];
+  } catch(e) { quotes = []; }
+}
+function saveQuotes() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
+}
+
+const fmt = n => n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
+const statusLabels = { preventivo: 'Preventivo', da_ordinare: 'Da ordinare', ordinato: 'Ordinato' };
+
+function uid() { return 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+// ---------- MODAL ----------
+function openNewQuoteModal() { document.getElementById('newQuoteModal').classList.add('active'); document.getElementById('newClientName').value=''; }
+function closeNewQuoteModal() { document.getElementById('newQuoteModal').classList.remove('active'); }
+function createQuote() {
+  const name = document.getElementById('newClientName').value.trim();
+  if (!name) { alert('Inserisci il nome del cliente'); return; }
+  const q = { id: uid(), client: name, createdAt: new Date().toISOString(), status: 'preventivo', deliveryDate: '', items: [] };
+  quotes.push(q);
+  saveQuotes();
+  closeNewQuoteModal();
+  openQuote(q.id);
+}
+
+// ---------- LIST VIEW ----------
+function backToList() {
+  currentQuoteId = null;
+  document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('listView').classList.remove('hidden');
+  renderList();
+}
+
+function computeItemGroups(items) {
+  const groups = {};
+  items.forEach(it => {
+    const key = it.kit + '|' + it.brand;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(it);
+  });
+  return groups;
+}
+
+function quoteTotals(q) {
+  const groups = computeItemGroups(q.items);
+  let listino = 0, finale = 0;
+  q.items.forEach(it => {
+    const key = it.kit + '|' + it.brand;
+    const promoActive = groups[key].length >= 3;
+    listino += it.pn;
+    finale += promoActive ? it.pp : it.pn;
+  });
+  return { listino, finale, savings: listino - finale };
+}
+
+function renderDashboard() {
+  const ordinati = quotes.filter(q => q.status === 'ordinato');
+  let totalSavings = 0;
+  const byMonth = {};
+  ordinati.forEach(q => {
+    const t = quoteTotals(q);
+    totalSavings += t.savings;
+    const dateRef = q.deliveryDate || q.createdAt;
+    const monthKey = dateRef.slice(0,7); // YYYY-MM
+    byMonth[monthKey] = (byMonth[monthKey] || 0) + t.savings;
+  });
+  document.getElementById('dashTotal').textContent = fmt(totalSavings);
+
+  const months = Object.keys(byMonth).sort();
+  const svg = document.getElementById('chartSvg');
+  svg.innerHTML = '';
+  if (months.length === 0) {
+    svg.innerHTML = '<text x="10" y="70" font-size="12" fill="#999">Nessun preventivo ordinato ancora — il grafico si popola quando segni un preventivo come "Ordinato".</text>';
+    return;
+  }
+  const maxVal = Math.max(...months.map(m => byMonth[m]), 1);
+  const barWidth = 50, gap = 20, chartHeight = 100, baseY = 110;
+  const totalWidth = months.length * (barWidth + gap) + gap;
+  svg.setAttribute('viewBox', `0 0 ${totalWidth} 140`);
+  months.forEach((m, i) => {
+    const val = byMonth[m];
+    const h = (val / maxVal) * chartHeight;
+    const x = gap + i * (barWidth + gap);
+    const y = baseY - h;
+    svg.innerHTML += `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" fill="#8fbf6a" rx="4"></rect>
+      <text x="${x + barWidth/2}" y="${y - 6}" text-anchor="middle" class="chart-value-label">${fmt(val)}</text>
+      <text x="${x + barWidth/2}" y="${baseY + 16}" text-anchor="middle" class="chart-bar-label">${m}</text>
+    `;
+  });
+}
+
+function renderMatchBanner() {
+  const el = document.getElementById('matchBanner');
+  const daOrdinare = quotes.filter(q => q.status === 'da_ordinare');
+  const groups = {}; // key -> [{quoteId, client, count}]
+  daOrdinare.forEach(q => {
+    const g = computeItemGroups(q.items);
+    Object.keys(g).forEach(key => {
+      if (g[key].length < 3) {
+        if (!groups[key]) groups[key] = [];
+        groups[key].push({ client: q.client, count: g[key].length, id: q.id });
+      }
+    });
+  });
+  const suggestions = [];
+  Object.keys(groups).forEach(key => {
+    const entries = groups[key];
+    const total = entries.reduce((s,e) => s + e.count, 0);
+    if (total >= 3 && entries.length >= 2) {
+      const [kit, brand] = key.split('|');
+      suggestions.push({ kit, brand, entries, total });
+    }
+  });
+  if (suggestions.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="match-banner"><strong>💡 Possibili accoppiamenti tra clienti per raggiungere la promo:</strong>' +
+    suggestions.map(s => `
+      <div class="match-item">
+        <strong>${s.brand}</strong> (${s.kit}) — ${s.total} pezzi in totale tra:
+        ${s.entries.map(e => `${e.client} (${e.count} pz)`).join(', ')}.
+        Se ordini insieme, tutti sbloccano la promo.
+      </div>`).join('') +
+    '</div>';
+}
+
+function renderList() {
+  renderDashboard();
+  renderMatchBanner();
+  const listEl = document.getElementById('quoteList');
+  if (quotes.length === 0) {
+    listEl.innerHTML = '<p class="empty-hint">Nessun preventivo ancora. Clicca "+ Nuovo preventivo" per iniziare.</p>';
+    return;
+  }
+  const sorted = [...quotes].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  listEl.innerHTML = sorted.map(q => {
+    const t = quoteTotals(q);
+    return `
+      <div class="quote-card" onclick="openQuote('${q.id}')">
+        <div class="quote-client">${q.client}</div>
+        <div class="quote-meta">${new Date(q.createdAt).toLocaleDateString('it-IT')} · ${q.items.length} prodotti${q.deliveryDate ? ' · consegna ' + new Date(q.deliveryDate).toLocaleDateString('it-IT') : ''}</div>
+        <span class="status-badge status-${q.status}">${statusLabels[q.status]}</span>
+        <div class="quote-total">${fmt(t.finale)}${t.savings > 0 ? ' <span style="color:#3b6d11;font-size:11px">(risparmio ' + fmt(t.savings) + ')</span>' : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+// ---------- DETAIL VIEW ----------
+function openQuote(id) {
+  currentQuoteId = id;
+  currentKit = PRODUCTS[0].kit;
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.remove('hidden');
+  renderDetail();
+}
+
+function getCurrentQuote() { return quotes.find(q => q.id === currentQuoteId); }
+
+function updateStatus(val) {
+  const q = getCurrentQuote(); q.status = val; saveQuotes(); renderDetail();
+}
+function updateDelivery(val) {
+  const q = getCurrentQuote(); q.deliveryDate = val; saveQuotes();
+}
+
+function renderDetail() {
+  const q = getCurrentQuote();
+  if (!q) { backToList(); return; }
+  document.getElementById('detailClientName').textContent = q.client;
+  document.getElementById('detailMeta').textContent = 'Creato il ' + new Date(q.createdAt).toLocaleDateString('it-IT');
+  document.getElementById('statusSelect').value = q.status;
+  document.getElementById('deliveryInput').value = q.deliveryDate || '';
+
+  // gap banners
+  const groups = computeItemGroups(q.items);
+  const gapEl = document.getElementById('gapBanners');
+  let gapHtml = '';
+  Object.keys(groups).forEach(key => {
+    const [kit, brand] = key.split('|');
+    const count = groups[key].length;
+    if (count > 0 && count < 3) {
+      gapHtml += `<div class="gap-banner">⚠ ${brand} (${kit}): hai ${count} pezzo${count>1?'i':''} selezionat${count>1?'i':'o'} — te ne manca${3-count>1?'no':''} ${3-count} per attivare la promo kit (min. 3).</div>`;
+    } else if (count >= 3) {
+      gapHtml += `<div class="promo-active-banner">✓ ${brand} (${kit}): promo attiva con ${count} pezzi.</div>`;
+    }
+  });
+  gapEl.innerHTML = gapHtml;
+
+  renderTabs();
+  renderCatalog();
+  renderSummary();
+}
+
+function renderTabs() {
+  const kits = [...new Set(PRODUCTS.map(p => p.kit))];
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  kits.forEach(k => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (k === currentKit ? ' active' : '');
+    tab.textContent = k;
+    tab.onclick = () => { currentKit = k; renderTabs(); renderCatalog(); };
+    tabsEl.appendChild(tab);
+  });
+}
+
+function isSelected(q, kit, code) {
+  return q.items.some(it => it.kit === kit && it.code === code);
+}
+
+function toggleProduct(p) {
+  const q = getCurrentQuote();
+  const idx = q.items.findIndex(it => it.kit === p.kit && it.code === p.code);
+  if (idx >= 0) q.items.splice(idx, 1);
+  else q.items.push(p);
+  saveQuotes();
+  renderDetail();
+}
+
+function renderCatalog() {
+  const q = getCurrentQuote();
+  const catalogEl = document.getElementById('catalog');
+  catalogEl.innerHTML = '';
+  const kitProducts = PRODUCTS.filter(p => p.kit === currentKit);
+  const cats = [...new Set(kitProducts.map(p => p.cat))];
+  cats.forEach(cat => {
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = cat;
+    catalogEl.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    kitProducts.filter(p => p.cat === cat).forEach(p => {
+      const sel = isSelected(q, p.kit, p.code);
+      const card = document.createElement('div');
+      card.className = 'card' + (sel ? ' selected' : '');
+      card.innerHTML = `
+        <div class="card-photo"><img src="${BASE}${p.photo}" alt="${p.name}"></div>
+        <div class="card-body">
+          <div class="card-code">${p.code}</div>
+          <div class="card-name">${p.name}</div>
+          <div class="price-row"><span class="price-old">${fmt(p.pn)}</span><span class="price-new">${fmt(p.pp)}</span></div>
+          <div class="badge-selected">✓ selezionato</div>
+        </div>`;
+      card.onclick = () => toggleProduct(p);
+      grid.appendChild(card);
+    });
+    catalogEl.appendChild(grid);
+  });
+}
+
+function renderSummary() {
+  const q = getCurrentQuote();
+  const groups = computeItemGroups(q.items);
+  const linesEl = document.getElementById('lines');
+  if (q.items.length === 0) {
+    linesEl.innerHTML = '<p class="empty-hint">Nessun prodotto selezionato.</p>';
+  } else {
+    linesEl.innerHTML = q.items.map(p => {
+      const key = p.kit + '|' + p.brand;
+      const promoActive = groups[key].length >= 3;
+      return `<div class="summary-row"><span>${p.code} — ${p.name} <em style="color:#aaa">(${p.kit})</em></span><span>${fmt(promoActive ? p.pp : p.pn)}</span></div>`;
+    }).join('');
+  }
+  const t = quoteTotals(q);
+  document.getElementById('totalListino').textContent = fmt(t.listino);
+  document.getElementById('totalFinal').textContent = fmt(t.finale);
+  document.getElementById('savingsRow').style.display = t.savings > 0 ? 'flex' : 'none';
+  document.getElementById('savingsAmount').textContent = fmt(t.savings);
+}
+
+// ---------- BACKUP ----------
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'preventivi_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('formato non valido');
+      quotes = imported;
+      saveQuotes();
+      renderList();
+      alert('Backup importato: ' + quotes.length + ' preventivi.');
+    } catch(err) { alert('File non valido: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ---------- INIT ----------
+loadQuotes();
+renderList();
+</script>
+</body>
+</html>
