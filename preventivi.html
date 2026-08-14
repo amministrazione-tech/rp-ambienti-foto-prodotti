@@ -18,7 +18,9 @@
 
   .dashboard { max-width: 1100px; background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
   .dash-total { font-size: 26px; font-weight: 700; color: #3b6d11; }
+  .dash-total.spent { color: #2c2c2a; }
   .dash-label { font-size: 12px; color: #888780; text-transform: uppercase; letter-spacing: 0.03em; }
+  .dash-row { display: flex; gap: 40px; flex-wrap: wrap; }
   .chart-wrap { margin-top: 14px; overflow-x: auto; }
   .chart-bar-label { font-size: 10px; fill: #888; }
   .chart-value-label { font-size: 10px; fill: #3b6d11; font-weight: 600; }
@@ -95,8 +97,16 @@
 
 <div id="listView">
   <div class="dashboard">
-    <div class="dash-label">Totale risparmiato (preventivi ordinati)</div>
-    <div class="dash-total" id="dashTotal">€ 0,00</div>
+    <div class="dash-row">
+      <div>
+        <div class="dash-label">Speso netto (preventivi ordinati)</div>
+        <div class="dash-total spent" id="dashSpent">€ 0,00</div>
+      </div>
+      <div>
+        <div class="dash-label">Totale risparmiato</div>
+        <div class="dash-total" id="dashTotal">€ 0,00</div>
+      </div>
+    </div>
     <div class="chart-wrap"><svg id="chartSvg" width="100%" height="140"></svg></div>
   </div>
 
@@ -240,15 +250,18 @@ function quoteTotals(q) {
 function renderDashboard() {
   const ordinati = quotes.filter(q => q.status === 'ordinato');
   let totalSavings = 0;
+  let totalSpent = 0;
   const byMonth = {};
   ordinati.forEach(q => {
     const t = quoteTotals(q);
     totalSavings += t.savings;
+    totalSpent += t.finale;
     const dateRef = q.deliveryDate || q.createdAt;
     const monthKey = dateRef.slice(0,7); // YYYY-MM
     byMonth[monthKey] = (byMonth[monthKey] || 0) + t.savings;
   });
   document.getElementById('dashTotal').textContent = fmt(totalSavings);
+  document.getElementById('dashSpent').textContent = fmt(totalSpent);
 
   const months = Object.keys(byMonth).sort();
   const svg = document.getElementById('chartSvg');
